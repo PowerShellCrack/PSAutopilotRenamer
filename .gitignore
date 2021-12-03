@@ -1,0 +1,6 @@
+!/Tests/
+/Tests/*
+!/.vscode/
+/.vscode/*
+*.code-workspace
+*.zip
