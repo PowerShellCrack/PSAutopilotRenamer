@@ -1240,10 +1240,3 @@ $ui_btnReboot.Add_Click({
 })
 
 Start-RenameUI @UIControlParam
-
-
-<#
-[17:33:26.090-300] [RenameAutoPilotDeviceUI.ps1] :: Unable to load Windows Presentation UI. Exception calling "Run" with "1" argument(s): "Parameter set cannot be resolved using the specified named parameters."
-cd D:\Github\PowerShellCrack\PSAutopilotRenamer
-.\RenameAutoPilotDeviceUI.ps1 -Test:$true -NoCreds:$true
-#>
