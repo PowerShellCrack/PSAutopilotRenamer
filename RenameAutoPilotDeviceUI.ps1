@@ -625,10 +625,14 @@ $XAML = @"
 #=======================================================
 # LOAD ASSEMBLIES AND UI
 #=======================================================
-[System.Reflection.Assembly]::LoadWithPartialName('WindowsFormsIntegration')  | out-null # Call the EnableModelessKeyboardInterop; allows a Windows Forms control on a WPF page.
-[System.Reflection.Assembly]::LoadWithPartialName('System.Windows.Application')  | out-null #Encapsulates a Windows Presentation Foundation application.
-[System.Reflection.Assembly]::LoadWithPartialName('presentationframework') | out-null #required for WPF
-[System.Reflection.Assembly]::LoadWithPartialName('PresentationCore')      | out-null #required for WPF
+[System.Reflection.Assembly]::LoadWithPartialName('System.Windows.Forms')       | out-null #creating Windows-based applications
+[System.Reflection.Assembly]::LoadWithPartialName('WindowsFormsIntegration')    | out-null # Call the EnableModelessKeyboardInterop; allows a Windows Forms control on a WPF page.
+[System.Reflection.Assembly]::LoadWithPartialName('System.Windows')             | out-null #Encapsulates a Windows Presentation Foundation application.
+[System.Reflection.Assembly]::LoadWithPartialName('System.ComponentModel')      | out-null #systems components and controls and convertors
+[System.Reflection.Assembly]::LoadWithPartialName('System.Data')                | out-null #represent the ADO.NET architecture; allows multiple data sources
+[System.Reflection.Assembly]::LoadWithPartialName('PresentationFramework')      | out-null #required for WPF
+[System.Reflection.Assembly]::LoadWithPartialName('PresentationCore')           | out-null #required for WPF
+[System.Reflection.Assembly]::LoadWithPartialName('System.Windows.Application') | out-null #Encapsulates a Windows Presentation Foundation application.
 
 #convert to XML
 [xml]$XAML = $XAML
@@ -673,9 +677,9 @@ Function Set-StatusKey{
     Begin
     {
         $HivePath = "$($Hive):\SOFTWARE"
-        $FullKeyPath = "PowerShellCrack\AutopilotRenamer"
-        New-Item -Path "$HivePath" -Name $FullKeyPath -Force -ErrorAction SilentlyContinue | Out-Null
-
+        $KeyPath = "PowerShellCrack\AutopilotRenamer"
+        New-Item -Path $HivePath -Name $KeyPath -Force -ErrorAction SilentlyContinue | Out-Null
+        $FullKeyPath = $HivePath + '\' + $KeyPath
     }
     Process
     {
@@ -795,9 +799,9 @@ Function Start-RenameUI{
     [CmdletBinding()]
     param(
         $UIObject,
-        [string]$UpdateStatusKeyHive
+        [switch]$UpdateStatusKeyHive
     )
-    If($PSBoundParameters.ContainsKey('UpdateStatusKeyHive')){Set-StatusKey -Hive $UpdateStatusKeyHive -Name Status -Value "Running"}
+    If($PSBoundParameters.ContainsKey('UpdateStatusKeyHive')){Set-StatusKey -Name 'Status' -Value "Running"}
 
     Try{
         #$UIObject.ShowDialog() | Out-Null
@@ -850,9 +854,9 @@ public static extern bool ShowWindow(IntPtr hWnd, Int32 nCmdShow);
         [void][System.Windows.Forms.Application]::Run($appContext)
     }
     Catch{
-        If($PSBoundParameters.ContainsKey('UpdateStatusKeyHive')){Set-StatusKey -Hive $UpdateStatusKeyHive -Name Status -Value 'Failed'}
-        Write-LogEntry ("Unable to load Windows Presentation UI. {0}" -f $_.Exception.Message) -Severity 3 -Outhost
-        Exit $_.Exception.HResult
+        #If($PSBoundParameters.ContainsKey('UpdateStatusKeyHive')){Set-StatusKey -Name 'Status' -Value 'Failed'}
+        #Write-LogEntry ("Exit {1}. Unable to load Windows Presentation UI. {0}" -f $_.Exception.Message,$_.Exception.HResult) -Severity 3 -Outhost
+        #Exit $_.Exception.HResult
     }
 }
 
@@ -865,7 +869,7 @@ function Stop-RenameUI{
     [CmdletBinding()]
     param(
         $UIObject,
-        [string]$UpdateStatusKeyHive,
+        [switch]$UpdateStatusKeyHive,
         [string]$CustomStatus
     )
 
@@ -873,12 +877,12 @@ function Stop-RenameUI{
     Else{$status = 'Completed'}
 
     Try{
-        If($PSBoundParameters.ContainsKey('UpdateStatusKeyHive')){Set-StatusKey -Hive $UpdateStatusKeyHive -Name Status -Value $status}
+        If($PSBoundParameters.ContainsKey('UpdateStatusKeyHive')){Set-StatusKey -Name 'Status' -Value $status}
         #$UIObject.Close() | Out-Null
         $UIObject.Close()
     }
     Catch{
-        If($PSBoundParameters.ContainsKey('UpdateStatusKeyHive')){Set-StatusKey -Hive $UpdateStatusKeyHive -Name Status -Value 'Failed'}
+        If($PSBoundParameters.ContainsKey('UpdateStatusKeyHive')){Set-StatusKey -Name 'Status' -Value 'Failed'}
         Write-LogEntry ("Failed to stop Windows Presentation UI properly. {0}" -f $_.Exception.Message) -Severity 2 -Outhost
         #Exit $_.Exception.HResult
     }
@@ -994,9 +998,10 @@ Function Get-ADUserOffice {
 
     $Results = @()
     # Execute the Search; build object with properties
+    Try{
     $Searcher.FindAll() | %{
-         Try{
-             $Object = New-Object PSObject -Property @{
+
+            $Object = New-Object PSObject -Property @{
                 DisplayName = $($_.Properties.displayname)
                 UserPrincipalName = $($_.Properties.userprincipalname)
                 GivenName = $($_.Properties.givenname)
@@ -1008,9 +1013,9 @@ Function Get-ADUserOffice {
             }
             $Results += $Object
         }
-        Catch{
-            #unable to grab attributes
-        }
+    }
+    Catch{
+        #unable to grab attributes
     }
 
     #return user and properties if specified
@@ -1038,7 +1043,7 @@ If($env:COMPUTERNAME -notmatch "^$PrefixCheck" -and !$Test){
     #Break
 }
 
-Write-LogEntry "Grabbing computer information...." -Outhost
+Write-LogEntry "Grabbing computer information..." -Outhost
 #get bios information and serial
 $Bios = Get-WMIObject -Class Win32_Bios
 #grab computer details
@@ -1056,7 +1061,7 @@ if($NoCreds)
     }
 }
 Else{
-    #convert encrypted passwrd into secure string for creds
+    #convert encrypted password into secure string for creds
     $SecurePass = $ADEncryptedPassword | ConvertTo-SecureString -Key $AESKey
     $creds = New-Object System.Management.Automation.PsCredential($ADUser, $SecurePass)
 
@@ -1128,20 +1133,20 @@ switch($OfficeName){
 # END: LOGIC CODE
 # NOTE: End with $NewComputername variable
 #============================================
-$ui_txtVersion.Text = 'v1.0.1'
+$ui_txtVersion.Text = 'v2.1.0'
 
 #Change the display if device is already renamed
 If ($env:COMPUTERNAME -ne $ui_inputTxtComputerName.Text)
 {
     $ui_txtTitle.Text = 'Ready to use this device?'
     $ui_txtSubTitle.Text = 'This device needs to be rebooted before use'
-    $ui_tabTitle.Text = 'Pending Reboot'
+    $ui_tabTitle.Header = 'Pending Reboot'
     $ui_btnReboot.Content = 'Reboot Now'
 }
 Else{
     $ui_txtTitle.Text = 'Ready to use this device?'
     $ui_txtSubTitle.Text = ''
-    $ui_tabTitle.Text = 'Ready'
+    $ui_tabTitle.Header = 'Ready'
     $ui_btnReboot.Content = 'Ready'
 }
 
@@ -1205,27 +1210,40 @@ $ui_btnReboot.Add_Click({
             Rename-Computer @RenameParams -Force -ErrorAction Stop
             Invoke-UIMessage -Message ("Device has been renamed to: {0}" -f $ui_inputTxtComputerName.Text) -HighlightObject $ui_inputTxtComputerName -OutputErrorObject $ui_txtError -Type OK
             If($RecordStatus){
-                Set-StatusKey -Hive HKLM -Name RenamedValue -Value $ui_inputTxtComputerName.Text
-                Set-SatusKey -Hive HKLM -Name Status -Value 'Completed'
+                Set-StatusKey -Name 'RenamedValue' -Value $ui_inputTxtComputerName.Text
+                Set-StatusKey -Name 'Status' -Value 'Completed'
             }
             Write-LogEntry ("Device has been renamed to: {0}" -f $ui_inputTxtComputerName.Text) -Severity 1 -Outhost
         }
         Catch{
             Invoke-UIMessage -Message "Unable to rename the device!" -HighlightObject $ui_inputTxtComputerName -OutputErrorObject $ui_txtError -Type Error
-            If($RecordStatus){Set-StatusKey -Hive HKLM -Name Status -Value 'Failed'}
+            If($RecordStatus){
+                Set-StatusKey -Name 'Status' -Value 'Failed'
+            }
             Write-LogEntry ("{0}" -f $_.Exception.Message) -Severity 3 -Outhost
         }
         Finally{
 
             If($ForceReboot){
-                If($RecordStatus){Set-StatusKey -Hive HKLM -Name RebootDate -Value (Get-Date)}
+                If($RecordStatus){
+                    Set-StatusKey -Name 'RebootDate' -Value (Get-Date)
+                }
                 Restart-Computer -Delay 1 -Force -AsJob -WhatIf:$Test
             }
 
             #close the UI
             Stop-RenameUI @UIControlParam
+
         }
     }
+
 })
 
 Start-RenameUI @UIControlParam
+
+
+<#
+[17:33:26.090-300] [RenameAutoPilotDeviceUI.ps1] :: Unable to load Windows Presentation UI. Exception calling "Run" with "1" argument(s): "Parameter set cannot be resolved using the specified named parameters."
+cd D:\Github\PowerShellCrack\PSAutopilotRenamer
+.\RenameAutoPilotDeviceUI.ps1 -Test:$true -NoCreds:$true
+#>

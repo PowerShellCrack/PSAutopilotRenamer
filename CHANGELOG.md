@@ -1,13 +1,10 @@
 # Change log for RenameAutoPilotDevice.ps1
 
-## 1.3.0 - October 20, 2021
 
 
+## 2.1.0 - December 3, 2021
 
-
-## 1.1.5 - April 13, 2021
-
-- Fixed OU retrieval
+- Added UI version
 
 ## 1.0.0 - March 21, 2021
 
