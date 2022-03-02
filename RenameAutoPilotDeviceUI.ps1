@@ -84,7 +84,7 @@ $credential.GetNetworkCredential().password
 [CmdletBinding()]
 Param (
     [Parameter(Mandatory=$False)]
-    [String]$PrefixCheck = 'DTOLAB',
+    [String]$PrefixCheck = 'CONTOSO',
     [boolean]$RecordStatus = $False,
     [boolean]$NoCreds = $False,
     [boolean]$ForceReboot = $True,
