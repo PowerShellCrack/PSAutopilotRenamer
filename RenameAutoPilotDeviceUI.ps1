@@ -54,7 +54,32 @@
         Version		: 1.0.0
         #Requires -Version 3.0
 #>
+<#
+## STORE THESE STEPS ELSEWHERE
+##*=============================================
 
+#How to “Obfuscate" password (encrypt & decrypt)
+
+$ADUser = 'contoso\admin'
+#STEP 1 - create random passphase (256 AES). Save the output as a variable (copy/paste)
+#NOTE: this key is unique; the same key must be used to decrypt
+$AESKey = New-Object Byte[] 32
+[Security.Cryptography.RNGCryptoServiceProvider]::Create().GetBytes($AESKey)
+Write-host ('$AESKey = @(' + ($AESKey -join ",").ToString() + ')')
+
+#STEP 2 - Encrypt password with AES key. Save the output as a variable (copy/paste)
+$AESEncryptedPassword = ConvertTo-SecureString -String '!QAZ1qaz!QAZ1qaz' -AsPlainText -Force | ConvertFrom-SecureString -Key $AESKey
+Write-host ('$ADEncryptedPassword = "' + $AESEncryptedPassword + '"')
+
+#STEP 3 - Store as useable credentials; converts encrypted key into secure key for use (used in the script)
+$SecurePass = $AESEncryptedPassword | ConvertTo-SecureString -Key $AESKey
+$credential = New-Object System.Management.Automation.PsCredential($ADUser, $SecurePass)
+
+#STEP 4 - Test password output (clear text) from creds
+$credential.GetNetworkCredential().password
+
+##*=============================================
+#>
 
 [CmdletBinding()]
 Param (
@@ -73,7 +98,7 @@ Param (
 $AESKey = @(230,69,177,190,75,214,231,63,142,85,221,38,174,145,77,7,79,129,30,78,194,205,177,239,194,219,126,7,206,212,71,29)
 
 #add username with domain
-$ADUser = 'dtolab\Username'
+$ADUser = 'contoso\admin'
 
 #Encrypt password (use AESkey and steps above)
 $ADEncryptedPassword = '76492d1116743f0423413b16050a5345MgB8ADAAWQBnADYAYwBsAEsANgBsADAARABEAHMATABGAEgAeQBGAEEASgBPAEEAPQA9AHwANwBhAGYANwBkAGYAZAAxADYAMgAzAGMAYwBlADkAMgBiADQAYgA2ADQAYQBjAGEAOQBlADkAZgBmADYAYgAwADMAZQBkAGIAMgBjADEAOQAxADMAZgBmADYANwBlADMANg

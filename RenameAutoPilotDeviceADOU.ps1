@@ -40,7 +40,6 @@ $credential = New-Object System.Management.Automation.PsCredential($ADUser, $Sec
 #STEP 4 - Test password output (clear text) from creds
 $credential.GetNetworkCredential().password
 
-
 ##*=============================================
 #>
 
@@ -105,7 +104,38 @@ Function Test-IsDomainJoined{
 
 }
 
+Function Get-ADUserOU {
+    <#
+    .SYNOPSIS
+        Get Active directory users OU
 
+    .DESCRIPTION
+        Get Active directory users OU Distinguish name attribute using adsisearcher
+
+    .PARAMETER User
+        Specify a users instead of list of users
+
+    .PARAMETER AllProperties
+        A switch to return to all properties of user instead of office
+
+    .PARAMETER Credential
+        Use alternate credentials when pulling AD objects
+
+    .NOTES
+        Author		: Dick Tracy II <richard.tracy@microsoft.com>
+	    Source	    : https://www.powershellcrack.com/
+        Version		: 1.0.0
+    #>
+    param(
+        [parameter(Mandatory = $false)]
+        [String]$User,
+        [parameter(Mandatory = $false)]
+        [switch]$AllProperties,
+        [parameter(Mandatory = $false)]
+        [System.Management.Automation.PSCredential]$Credential
+    )
+
+}
 Function Get-ADUserOffice {
     <#
     .SYNOPSIS
